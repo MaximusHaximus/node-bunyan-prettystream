@@ -92,6 +92,19 @@ var funcFields = {
 var simpleReqRecord = {"name":"amon-master","hostname":"9724a190-27b6-4fd8-830b-a574f839c67d","pid":12859,"route":"HeadAgentProbes","req_id":"cce79d15-ffc2-487c-a4e4-e940bdaac31e","level":20,"contentMD5":"11FxOYiYfpMxmANj4kGJzg==","msg":"headAgentProbes respond","time":"2012-08-08T10:25:47.636Z","v":0};
 var detailedReqResRecord = {"name":"amon-master","hostname":"9724a190-27b6-4fd8-830b-a574f839c67d","pid":12859,"audit":true,"level":30,"remoteAddress":"10.2.207.2","remotePort":50394,"req_id":"cce79d15-ffc2-487c-a4e4-e940bdaac31e","req":{"method":"HEAD","url":"/agentprobes?agent=ccf92af9-0b24-46b6-ab60-65095fdd3037","headers":{"accept":"application/json","content-type":"application/json","host":"10.2.207.16","connection":"keep-alive"},"httpVersion":"1.1","trailers":{},"version":"*"},"res":{"statusCode":200,"headers":{"content-md5":"11FxOYiYfpMxmANj4kGJzg==","access-control-allow-origin":"*","access-control-allow-headers":"Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version","access-control-allow-methods":"HEAD","access-control-expose-headers":"X-Api-Version, X-Request-Id, X-Response-Time","connection":"Keep-Alive","date":"Wed, 08 Aug 2012 10:25:47 GMT","server":"Amon Master/1.0.0","x-request-id":"cce79d15-ffc2-487c-a4e4-e940bdaac31e","x-response-time":3},"trailer":false},"route":{"name":"HeadAgentProbes","version":false},"latency":3,"secure":false,"_audit":true,"msg":"HeadAgentProbes handled: 200","time":"2012-08-08T10:25:47.637Z","v":0};
 var detailedReqResRecordWithHeaderObject = {"name":"amon-master","hostname":"9724a190-27b6-4fd8-830b-a574f839c67d","pid":12859,"audit":true,"level":30,"remoteAddress":"10.2.207.2","remotePort":50394,"req_id":"cce79d15-ffc2-487c-a4e4-e940bdaac31e","req":{"method":"HEAD","url":"/agentprobes?agent=ccf92af9-0b24-46b6-ab60-65095fdd3037","headers":{"accept":"application/json","content-type":"application/json","host":"10.2.207.16","connection":"keep-alive"},"httpVersion":"1.1","trailers":{},"version":"*"},"res":{"statusCode":200,"header":{"content-md5":"11FxOYiYfpMxmANj4kGJzg==","access-control-allow-origin":"*","access-control-allow-headers":"Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version","access-control-allow-methods":"HEAD","access-control-expose-headers":"X-Api-Version, X-Request-Id, X-Response-Time","connection":"Keep-Alive","date":"Wed, 08 Aug 2012 10:25:47 GMT","server":"Amon Master/1.0.0","x-request-id":"cce79d15-ffc2-487c-a4e4-e940bdaac31e","x-response-time":3},"trailer":false},"route":{"name":"HeadAgentProbes","version":false},"latency":3,"secure":false,"_audit":true,"msg":"HeadAgentProbes handled: 200","time":"2012-08-08T10:25:47.637Z","v":0};
+var err = new Error("Error message");
+err.status = 500;
+err.details = { code: "ERROR_CODE" };
+var errorRecordWithExtraFields = {
+  name: "myservice",
+  pid: 123,
+  hostname: "example.com",
+  level: 30,
+  err: err,
+  msg: "Custom Error message",
+  time: "2012-02-08T22:56:52.856Z",
+  v: 0
+};
 
 describe('A PrettyStream', function(){
   it('should pretty print simple uncolored log statements', function(){
@@ -248,6 +261,42 @@ describe('A PrettyStream', function(){
     result.should.equal('TIME: 2012-02-08T22:56:52.856Z LEVEL:  INFO NAME: myservice/123 HOST: example.com SRC:  MSG: My message EXTRAS:  (extra=field) DETAILS:     wat: {\n' +
     '      "perhaps": "some data will exist!"\n' +
     '    }\n');
+  });
+
+  it('should pretty print error with extra details', function() {
+    var prettyStream = new PrettyStream({ useColor: false });
+    var result = prettyStream.formatRecord(errorRecordWithExtraFields);
+    var expected =
+      [
+        '[2012-02-08T22:56:52.856Z]  INFO: myservice/123 on example.com: Custom Error message (err.status=500)',
+        '    Error: Error message',
+        '        at Object.<anonymous> (E:\\node-bunyan-prettystream\\test\\prettystream.test.js:95:11)',
+        '        at Module._compile (module.js:653:30)',
+        '        at Object.Module._extensions..js (module.js:664:10)',
+        '        at Module.load (module.js:566:32)',
+        '        at tryModuleLoad (module.js:506:12)',
+        '        at Function.Module._load (module.js:498:3)',
+        '        at Module.require (module.js:597:17)',
+        '        at require (internal/module.js:11:18)',
+        '        at E:\\node-bunyan-prettystream\\node_modules\\mocha\\lib\\mocha.js:230:27',
+        '        at Array.forEach (<anonymous>)',
+        '        at Mocha.loadFiles (E:\\node-bunyan-prettystream\\node_modules\\mocha\\lib\\mocha.js:227:14)',
+        '        at Mocha.run (E:\\node-bunyan-prettystream\\node_modules\\mocha\\lib\\mocha.js:495:10)',
+        '        at Object.<anonymous> (E:\\node-bunyan-prettystream\\node_modules\\mocha\\bin\\_mocha:469:18)',
+        '        at Module._compile (module.js:653:30)',
+        '        at Object.Module._extensions..js (module.js:664:10)',
+        '        at Module.load (module.js:566:32)',
+        '        at tryModuleLoad (module.js:506:12)',
+        '        at Function.Module._load (module.js:498:3)',
+        '        at Function.Module.runMain (module.js:694:10)',
+        '        at startup (bootstrap_node.js:204:16)',
+        '        at bootstrap_node.js:625:3',
+        '    --',
+        '    err.details: {',
+        '      "code": "ERROR_CODE"',
+        '    }'
+      ].join("\n") + "\n";
+    result.should.equal(expected);
   });
 });
 
